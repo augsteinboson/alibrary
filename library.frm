@@ -3,6 +3,9 @@
 #define MaxGammaTracesPerTerm "6"
 #define MaxGamma5PerTerm "4"
 
+* Only for ggHH project
+auto s ff dia;
+
 * These are the internal names.
 CF EX, UNIQTAG;
 S FAIL;
