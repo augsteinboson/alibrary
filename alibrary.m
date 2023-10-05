@@ -2006,7 +2006,9 @@ ToSympy[ex_] := ex /. Pi -> pi //
   ToString //
   StringReplace[#, WordBoundary ~~ "Sqrt[" -> "sqrt["]& //
   StringReplace[#, "[" -> "("]& //
-  StringReplace[#, "]" -> ")"]&
+  StringReplace[#, "]" -> ")"]& //
+  StringReplace[#, "*^" -> "e"]&
+
 
 (* Prepare pySecDec files in a given directory for the given
  * list of integrals. These can then be compiled manually by
@@ -2373,7 +2375,7 @@ Module[{sum2int2co, integrals, int2idx, name, basisid, bid2basis, indices, basis
     "],\n",
     "      processes = nthreads,\n",
     "    )\n",
-    "    subprocess.check_call(['make', '-C', 'sum', '-j', str(nthreads), 'disteval.done'])\n",
+    "    subprocess.check_call(['make', '-C', 'sum', '-j', str(nthreads), 'disteval.done', 'SECDEC_WITH_CUDA_FLAGS=\"-arch=sm_80\"'])\n",
     "    subprocess.check_call(['cp', '-a', 'sum/disteval', cwd])\n",
     "    subprocess.check_call(['rm', '-rf', 'sum'])\n"
   ];

@@ -4,7 +4,8 @@
 #define MaxGamma5PerTerm "4"
 
 * Only for ggHH project
-auto s ff dia;
+auto s ff dia ct conden;
+cf Sqrt;
 
 * These are the internal names.
 CF EX, UNIQTAG;
