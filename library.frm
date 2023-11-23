@@ -5,7 +5,7 @@
 
 * Only for ggHH project
 auto s ff dia ct conden;
-cf Sqrt;
+s v;
 
 * These are the internal names.
 CF EX, UNIQTAG;
