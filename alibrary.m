@@ -123,7 +123,7 @@ Module[{model, options, nomasspat, tmpdir, tmpoutput, momi, momo, i, result},
         {i, Length[fieldso]}],
       ""]
   ];
-  SafeRun[MkString["cd '", tmpdir, "' && '", qgraf, "'"]];
+  SafeRun[MkString["cd '", tmpdir, "' && '", qgraf, "' qgraf.dat"]];
   result = SafeGet[tmpdir <> "/output.m"];
   EnsureNoDirectory[tmpdir];
   result
