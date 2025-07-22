@@ -103,7 +103,7 @@ Module[{model, options, noMassPattern, extra, tmpDir, momI, momO, i, result},
   CopyFile[$Apath <> "/qgraf-stylefile", tmpDir <> "/stylefile"];
   MkFile[tmpDir <> "/modelfile", model];
   momI = If[Length[fieldsi] == 1, {"q"}, Table["q" <> ToString[i], {i, Length[fieldsi]}]];
-  momO = If[Length[fieldso] == 1, {"q"}, Table["p" <> ToString[i], {i, Length[fieldso]}]];
+  momO = If[Length[fieldso] == 1, {"p"}, Table["p" <> ToString[i], {i, Length[fieldso]}]];
   MkFile[tmpDir <> "/qgraf.dat",
     "output='output.m';\n",
     "style='stylefile';\n",
@@ -125,9 +125,9 @@ Module[{model, options, noMassPattern, extra, tmpDir, momI, momO, i, result},
       ""],
     extra
   ];
-  SafeRun[MkString["cd '", tmpdir, "' && '", qgraf, "' qgraf.dat"]];
-  result = SafeGet[tmpdir <> "/output.m"];
-  EnsureNoDirectory[tmpdir];
+  SafeRun[MkString["cd '", tmpDir, "' && '", qgraf, "' qgraf.dat"]];
+  result = SafeGet[tmpDir <> "/output.m"];
+  EnsureNoDirectory[tmpDir];
   result
 ]
 Options[Diagrams] = {
@@ -969,6 +969,7 @@ Module[{tmpsrc, tmpdst, tmplog, result, toform, fromform, i, expridxs},
   tmpdst = tmpsrc <> ".m";
   tmplog = tmpsrc // StringReplace[".frm" ~~ EndOfString -> ".log"];
   {toform, fromform} = AmpFormIndexMaps[exprs];
+  Print[tmpsrc]
   MkFile[tmpsrc,
     "#include ", $Apath, "/library.frm\n",
     (* This whole dance is needed to distribute expressions
@@ -1011,15 +1012,17 @@ Module[{tmpsrc, tmpdst, tmplog, result, toform, fromform, i, expridxs},
     $FORM, " -q -Z -M -l '", tmpsrc, "'"]];
   Print["RunThroughForm: reading result (", FileByteCount[tmpdst]//FormatBytes, ")"];
   result = SafeGet[tmpdst]//TM;
-  DeleteFile[{tmpsrc, tmpdst, tmplog}];
+  (*DeleteFile[{tmpsrc, tmpdst, tmplog}];*)
   Print["RunThroughForm: transforming it back"];
-  result /. fromform // AmpFromForm // Terms //
+  finres = result /. fromform // AmpFromForm // Terms //
       Map[Replace[EX[i_]*ex_. :> {i, ex}]] //
      GroupBy[#, First -> (#[[2]] &)] & // Map[Apply[Plus]] //
-   Lookup[#, Range[Length[exprs]], 0] &
+   Lookup[#, Range[Length[exprs]], 0] &;
+  finres
   ]
 RunThroughForm[code_] := RunThroughForm[#, code]&
-RunThroughForm[exprs_, code_] := RunThroughForm[{exprs}, code] // Only
+(*RunThroughForm[exprs_, code_] := RunThroughForm[{exprs}, code] // Only*)
+RunThroughForm[exprs_, code_] := RunThroughForm[{exprs}, code]
 
 FormCall[procname_String] := {"#call ", procname, "\n"}
 FormCall[procnames__] := Map[FormCall, {procnames}]
@@ -1063,7 +1066,7 @@ FormCallToB[bases_List] := MkString[
           }&] // Union,
         basis["nummap"] // Normal //
           Map[{
-            "    id ", #[[1]] /. sp->(Dot/*Sort) //AmpToForm, " = ",
+            "    id ", #[[1]] /. sp->(Dot/*Sort) // AmpToForm, " = ",
             #[[2]] /. basis["sprules"] /. DEN[n_] :> MkString["DEN", n] // AmpToForm,
             ";\n"
           }&] // Union,

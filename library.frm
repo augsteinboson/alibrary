@@ -138,7 +138,7 @@ unitTrace 4;
 
 #procedure diractrace
 #call begin(diractrace)
-    #call uniqbegin(gammatrace d_ epsilon4)
+    #call uniqbegin(gammatrace d_ epsilon4 momentum)
     #if ( `EXTRASYMBOLS_' > 0 )
         exit "ERROR: diractrace: already have `EXTRASYMBOLS_' extra symbols at the start";
     #endif
@@ -171,9 +171,7 @@ unitTrace 4;
         traceN,`i';
     #enddo
     #call sort(diractrace-traceN)
-    if (match(epsilon4(lor1?, lor2?, lor3?, lor4?)));
-      exit "ERROR: diractrace: leftover epsilon4() at the end; is MaxGammaTracesPerTerm too small?";
-    endif;
+    id epsilon4(lorx1?, lorx2?, lorx3?, lorx4?)*momentum(px1?, lor1?)*momentum(px2?, lor2?) = epsilon4(lorx1, lorx2, lorx3, lorx4)*px1(lor1)*px2(lor2);
     if (match(gammatrace(?x)));
       exit "ERROR: diractrace: leftover gammatrace() at the end; is MaxGammaTracesPerTerm too small?";
     endif;
@@ -191,6 +189,10 @@ unitTrace 4;
 
     delete extrasymbols;
     #call uniqend()
+    .sort
+    if (match(epsilon4(lor1?, lor2?, lor3?, lor4?)));
+      exit "ERROR: diractrace: leftover epsilon4() at the end; is MaxGammaTracesPerTerm too small?";
+    endif;
 #call end(diractrace)
 #endprocedure
 

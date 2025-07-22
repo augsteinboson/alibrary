@@ -170,8 +170,8 @@ deltalor[a_, b_] := delta[lor[a], lor[b]]
 
 AmpToForm[expression_] :=
  ToString[expression, InputForm] //
-  StringReplace[{"\"" -> "", " " -> "", "[" -> "(", "]" -> ")", "Sqrt" -> "sqrt_", "**" -> "*"}]
-AmpFromForm[expression_] := expression /. {"sqrt_" -> "Sqrt"}
+  StringReplace[{"\"" -> "", " " -> "", "[" -> "(", "]" -> ")", "Sqrt" -> "sqrt_", "**" -> "*", "Pi" -> "pi_"}]
+AmpFromForm[expression_] := ToString[expression, InputForm] // StringReplace[{"(sqrt_)" -> "Sqrt", "(pi_)" -> "Pi", "pi_" -> "Pi"}] // ToExpression
 
 AmpFormIndexMaps[ex_] := Module[{original, renamed, i, mu},
   original = CaseUnion[ex, _lor | _adj | _fun | _spn | _X | _flv];
