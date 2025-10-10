@@ -511,6 +511,16 @@ ExpandScalarProducts[mompattern_] := ReplaceAll[sp[a_, b_] :> (
   }]
 )]
 
+(* Convert all `den[...]` in an expression into equivalent
+ * combinations of `sp[...]`, so that e.g. `den[p]` would become
+ * `1/sp[p,p]`. *)
+DenToSP[ex_] :=
+  ex /. {
+    den[p_] :> 1/sp[p, p],
+    den[p_, m2_] :> 1/(sp[p, p] - m2),
+    den[p_, m2_, irr] :> 1/(sp[p, p] - m2)
+  }
+
 (* Convert B notation back to a product of `den`.
  *)
 BToDen[ex_, bases_List] :=
@@ -775,8 +785,27 @@ If[Not[MatchQ[$Feynson, _String]], $Feynson = "feynson -q -j4"; ];
  * each element being `B[basis-id, (1|0), ...]`, listing the topmost
  * zero sectors.
  *)
+TopZeroSectors[basis_Association] :=
+  RunThrough[$Feynson <> " -s zero-sectors -", {
+      basis["denominators"] /. {
+        den[p_] :> p^2,
+        den[p_, m_] :> p^2-m,
+        den[p_, m_, irr] :> p^2-m,
+        den[p_, m_, cut] :> p^2-m-CUT
+      },
+      basis["denominators"] /. den[_, _, cut] -> 1 /. den[___] -> 0,
+      basis["loopmom"],
+      basis["sprules"] /. Rule->List /. sp -> Times
+    }] //
+    Map[B[basis["id"], Sequence@@SectorIdToIndices[#, Length[basis["denominators"]]]]&]
+TopZeroSectors[bases_List] := bases // Map[TopZeroSectors] // Apply[Join]
+
+(* Calculate the zero sectors of a given basis. Return a list,
+ * each element being `B[basis-id, (1|0), ...]`, listing all
+ * zero sectors.
+ *)
 ZeroSectors[basis_Association] :=
-  RunThrough[$Feynson <> " zero-sectors -sj3 -", {
+  RunThrough[$Feynson <> " zero-sectors -", {
       basis["denominators"] /. {
         den[p_] :> p^2,
         den[p_, m_] :> p^2-m,
@@ -794,7 +823,7 @@ ZeroSectors[bases_List] := bases // Map[ZeroSectors] // Apply[Join]
  * notation) of a given basis.
  *)
 ZeroSectorPattern[basis_Association] :=
-  ZeroSectors[basis] //
+  TopZeroSectors[basis] //
   MapReplace[
     B[bid_, idx__] :>
       B[bid, {idx} /. 1 -> _ /. 0 -> _?NonPositive // Apply[Sequence]]
@@ -817,7 +846,7 @@ ZeroSectorPattern[bases_List] :=
  * You can use [[UniqueSupertopologyMapping]] to figure out the
  * topmost supertopologies after this.
  *)
-SymmetryMaps[families_List, loopMom_List, spRules_] :=
+SymmetryMaps[families_List, loopMom_List, OptionsPattern[]] :=
 Module[{denSets},
   denSets = families // NormalizeDens // Map[
     CaseUnion[_den] /* Union /* Select[NotFreeQ[Alternatives@@loopMom]]
@@ -826,9 +855,16 @@ Module[{denSets},
     den[p_] :> p^2 /.
     den[p_, m_] :> p^2-m /.
     den[p_, m_, cut] :> p^2-m-CUT;
-  RunThrough[$Feynson <> " symmetrize -", {denSets, loopMom, spRules // Map[Apply[List]]}] // Map[Map[Apply[Rule]]]
+  RunThrough[
+    MkString[$Feynson, If[OptionValue[PreserveOrder], " -d", ""], " symmetrize -"],
+    {
+      denSets,
+      loopMom,
+      OptionValue[SPRules] /. sp[a_, b_] :> a*b // Map[Apply[List]]
+    }] //
+    Map[Map[Apply[Rule]]]
 ];
-SymmetryMaps[families_List, loopMom_List] := SymmetryMaps[families, loopMom, {}]
+Options[SymmetryMaps] = {SPRules -> {}, PreserveOrder -> False};
 
 (* Determine if the latter families of integrals can be expressed
  * in terms of the earlier ones. For each family (defined by a list
@@ -846,7 +882,7 @@ Module[{},
       den[p_, m_, irr] :> p^2-m /.
       den[p_, m_, cut] :> p^2-m-CUT,
     loopMom,
-    spRules // Map[Apply[List]]
+    spRules /. sp[a_, b_] :> a*b // Map[Apply[List]]
   }]
 ]
 
@@ -1158,7 +1194,7 @@ Module[{loopmom, extmom, dens, basis},
 (* Create Kira’s jobs file.
  *)
 MkKiraJobsYaml[filename_, bids_List, topsectors_, mode_] :=
-Module[{bid, sector, r, s}, 
+Module[{bid, sector, r, s, d},
   MaybeMkFile[filename,
     "jobs:\n",
     " - reduce_sectors:\n",
@@ -1166,10 +1202,19 @@ Module[{bid, sector, r, s},
     Table[
         r = Max[sector["r"], 1 + Plus@@sector["idx"]];
         s = Max[sector["s"], 1];
-        {"     - {topologies: [", KiraBasisName[bid], "], sectors: [b", sector["idx"], "], r: ", r, ", s: ", s, "}\n"}
+        d = Max[sector["d"], 1];
+        {"     - {topologies: [", KiraBasisName[bid], "], sectors: [b",
+            sector["idx"], "], r: ", r, ", s: ", s, ", d: ", d, "}\n"}
         ,
         {bid, bids},
         {sector, topsectors[bid]}],
+    "    truncate_sp:\n",
+    Table[{
+        "     - {topologies: [", KiraBasisName[bid], "], l: ",
+        Min[Table[sector["l"], {sector, topsectors[bid]}]],
+        "}\n"
+      },
+      {bid, bids}],
     "    select_integrals:\n",
     "     select_mandatory_list:\n",
     Table[
@@ -1333,12 +1378,14 @@ Module[{sector2i, sector2r, sector2s, sector2d, o2sectors, int, sector, r, s, d,
   sector2r = <||>;
   sector2s = <||>;
   sector2d = <||>;
+  sector2l = <||>;
   o2sectors = <||>;
   Do[
       sector = IndicesToSectorId[int];
       sector2i[sector] = SectorIdToIndices[sector, Length[int]];
       r = IndicesToR[int];
       s = IndicesToS[int];
+      l = IndicesToT[int] - s + 1;
       d = IndicesToDots[int];
       o = {s, r};
       o2sectors[o] = {o2sectors[o] /. _Missing -> {}, sector};
@@ -1350,6 +1397,7 @@ Module[{sector2i, sector2r, sector2s, sector2d, o2sectors, int, sector, r, s, d,
        * inside [[MkKiraJobsYaml]].
        *)
       sector2s[sector] = Max[s, sector2s[sector] /. _Missing -> 0];
+      sector2l[sector] = Min[l, sector2l[sector] /. _Missing -> 9999];
       ,
       {int, idxlist}
   ];
@@ -1367,6 +1415,7 @@ Module[{sector2i, sector2r, sector2s, sector2d, o2sectors, int, sector, r, s, d,
               sector2r[done[[i]]] = Max[sector2r[sector], sector2r[done[[i]]]];
               sector2d[done[[i]]] = Max[sector2d[sector], sector2d[done[[i]]]];
               sector2s[done[[i]]] = Max[sector2s[sector], sector2s[done[[i]]]];
+              sector2l[done[[i]]] = Min[sector2l[sector], sector2l[done[[i]]]];
               ];
           ,
           {sector, o2sectors[o] // Flatten // Union // Reverse}
@@ -1375,7 +1424,12 @@ Module[{sector2i, sector2r, sector2s, sector2d, o2sectors, int, sector, r, s, d,
       {o, o2sectors // Keys // Sort // Reverse}
   ];
   Table[
-    <|"id" -> sector, "idx" -> sector2i[sector], "r" -> sector2r[sector], "s" -> sector2s[sector], "d" -> sector2d[sector]|>
+    <|"id" -> sector,
+      "idx" -> sector2i[sector],
+      "r" -> sector2r[sector],
+      "s" -> sector2s[sector],
+      "l" -> sector2l[sector],
+      "d" -> sector2d[sector]|>
     ,
     {sector, sectors}] //
     Sort

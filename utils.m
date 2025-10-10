@@ -121,6 +121,11 @@ ReallyReplace[{rules__}] := Replace[{rules, x_ :> Error["Failed to replace: ", x
 ReallyReplace[rule_] := Replace[{rule, x_ :> Error["Failed to replace: ", x]}]
 ReallyReplace[ex_, rule_] := ex // ReallyReplace[rule]
 
+(* Apply a function to key-value pairs of an Association, returning
+ * the same Association with mapped values. *)
+MapKV[f_, a_Association] := a // Normal // Map[Apply[(#1 -> f[#1, #2])&]] // Association
+MapKV[f_] := MapKV[f, #]&
+
 (* Get the first and the only element in a list, fail if the
  * list is not a single element list. *)
 Only[{el_}] := el
@@ -483,6 +488,34 @@ Module[{counter, elements, exX, p, X},
   elements = MapThread[Rule, {keys, elements}] // Association;
   exX /. X -> elements
 ]
+
+(* Apply a list-to-list mapping function MapFun to a list, but
+ * do so by figuring out the set of unique items, applying the
+ * mapping function to them, and then reshuffling the result so
+ * it would look like it was applied to the whole list. Useful if
+ * the mapping function is slow and there is a lot of duplicated
+ * items. *)
+UniqueApply[MapFun_, items_List] :=
+Module[{WRAP, uniqItemList, uniqItemIndex, itemIndexList, mappedUniqItems, item, idx},
+  uniqItemList = {};
+  uniqItemIndex = <||>;
+  itemIndexList = {};
+  Do[
+    (* We need to wrap items so that Flatten would work on uniqItemList. *)
+    item = WRAP[item];
+    idx = Lookup[uniqItemIndex, item, None];
+    If[idx === None,
+      uniqItemList = {uniqItemList, item};
+      uniqItemIndex[item] = idx = Length[uniqItemIndex] + 1;
+    ];
+    itemIndexList = {itemIndexList, idx};
+    ,
+    {item, items}];
+  mappedUniqItems = uniqItemList // Flatten // #[[;;,1]]& // MapFun;
+  If[NotMatchQ[mappedUniqItems, _List], Error["UniqApply: MapFun did not return a list"]];
+  mappedUniqItems[[itemIndexList // Flatten]]
+]
+UniqueApply[MapFun_] := UniqueApply[MapFun, #]&
 
 (*
 Among a list of sets, find such a sublist such that all other
