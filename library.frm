@@ -1,6 +1,6 @@
 #include color.h
 
-#define MaxGammaTracesPerTerm "6"
+#define MaxGammaTracesPerTerm "1"
 #define MaxGamma5PerTerm "4"
 
 * Only for ggHH project
@@ -12,6 +12,7 @@ CF EX, UNIQTAG;
 S FAIL;
 auto V tmpv;
 auto S x;
+auto f gam;
 
 Table sparse zerofill UNIQVALS(1);
 
@@ -65,6 +66,8 @@ unitTrace 4;
 * - d[ab] d[b0] d[0a] charge[b]^n -- a fixed index with a charge (=Q0, Q0^2)
     repeat id deltaf(flv1?, flv?)*deltaf(flv?, flv2?) = deltaf(flv1, flv2)*replace_(flv, flv1);
     repeat id deltaft(flv1?, flv?)*deltaft(flv?, flv2?) = deltaft(flv1, flv2)*replace_(flv, flv1);
+* If CKM elements appear we can easily get fermion lines mixing massive and massless states
+    repeat id deltaft(flv1?, flv?)*deltaf(flv?, flv2?) = deltaf(flv1, flv2)*replace_(flv, flv1);
 * Now we only have:
 * - d[aa]
 * - d[aa] charge[a]^n
@@ -138,7 +141,7 @@ unitTrace 4;
 
 #procedure diractrace
 #call begin(diractrace)
-    #call uniqbegin(gammatrace d_ epsilon4 momentum)
+    #call uniqbegin(gammatrace d_ epsilon4 momentum tag)
     #if ( `EXTRASYMBOLS_' > 0 )
         exit "ERROR: diractrace: already have `EXTRASYMBOLS_' extra symbols at the start";
     #endif
@@ -152,6 +155,8 @@ unitTrace 4;
     #write "*** uniq momenta combinations: `EXTRASYMBOLS_'"
     #write "%X"
 * Larin scheme for gamma5 involved in an axial current.
+    id gammatrace(gamma5,gamma(lor?),slash(xp?)) = -gammatrace(gamma5(lor), slash(xp)) * tag(55);
+*    id gammatrace(gamma5,slash(xp?)) = -gammatrace(gamma5(lor), slash(xp)) * gtest;
     #do i = 1, `MaxGamma5PerTerm'
         id once gammatrace(?x1, gamma5(lormu?), ?x2) =
             i_/6 * epsilon4(lormu, lorax`i'a, lorax`i'b, lorax`i'c) *
@@ -189,7 +194,7 @@ unitTrace 4;
 
     delete extrasymbols;
     #call uniqend()
-    .sort
+    .sort;
     if (match(epsilon4(lor1?, lor2?, lor3?, lor4?)));
       exit "ERROR: diractrace: leftover epsilon4() at the end; is MaxGammaTracesPerTerm too small?";
     endif;
