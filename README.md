@@ -17,7 +17,7 @@ and modify intermediate results, and generally progress towards
 building a solution to your problem one step at a time.
 
 [mathematica]: https://www.wolfram.com/mathematica/
-[qgraf]: http://cfif.ist.utl.pt/~paulo/qgraf.html
+[qgraf]: http://www.cefema-gt.tecnico.ulisboa.pt/~paulo/qgraf.html
 [graphviz]: https://graphviz.org/
 [form]: https://www.nikhef.nl/~form/
 [color.h]: https://www.nikhef.nl/~form/maindir/packages/color/
