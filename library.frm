@@ -15,6 +15,7 @@ Table sparse zerofill UNIQVALS(1);
 cfunction delta(s), epsilon4(a), deltaf(s), deltaft(s), dot(s), momentum, polarization, den, gammachain, gammatrace, spinor, slash, gamma, gamma5, colorT, colorf, sp, B;
 cfunction chargeQ, chargeV, chargeA, chargeQt, chargeVt, chargeAt;
 cfunction flvsum, flvsumt;
+cfunction CKM, ConjCKM;
 cfunction inv, tag;
 symbol I, d, ep, cut, irr;
 symbol Ca, Cf, Tf, Na, Nc, Xi, Xi2, Xi3, Xi4;
