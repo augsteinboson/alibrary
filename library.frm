@@ -149,10 +149,22 @@ unitTrace 4;
     #write "*** uniq momenta combinations: `EXTRASYMBOLS_'"
     #write "%X"
 * Larin scheme for gamma5 involved in an axial current.
+    repeat id gammatrace(?x1, gamma5(lor?), ?x2) = gammatrace(?x1, gamma(lor), gamma5, ?x2)*tag(granzig);
+    repeat;
+    id gammatrace(?x1, gamma5, gamma(lor?), ?x2, gamma5, ?x3) = -gammatrace(?x1, gamma(lor), gamma5, ?x2, gamma5, ?x3);
+    id gammatrace(?x1, gamma5, slash(p?), ?x2, gamma5, ?x3) = -gammatrace(?x1, slash(p), gamma5, ?x2, gamma5, ?x3);
+    endrepeat;
+    repeat id gammatrace(?x1, gamma5, gamma5, ?x2) = gammatrace(?x1, ?x2);
+    id gammatrace(?x1, gamma(lor?), gamma5, ?x2) = gammatrace(?x1, gamma5(lor), ?x2);
     #do i = 1, `MaxGamma5PerTerm'
         id once gammatrace(?x1, gamma5(lormu?), ?x2) =
             i_/6 * epsilon4(lormu, lorax`i'a, lorax`i'b, lorax`i'c) *
             gammatrace(?x1, gamma(lorax`i'a), gamma(lorax`i'b), gamma(lorax`i'c), ?x2);
+    #enddo
+    #do i = 1, `MaxGamma5PerTerm'
+        id once gammatrace(?x1, gamma5, ?x2) =
+            i_/24 * epsilon4(lorax`i'a, lorax`i'b, lorax`i'c, lorax`i'd) *
+            gammatrace(?x1, gamma(lorax`i'a), gamma(lorax`i'b), gamma(lorax`i'c), gamma(lorax`i'd), ?x2);
     #enddo
     argument gammatrace;
         #do i = 1,`EXTRASYMBOLS_'
@@ -177,7 +189,7 @@ unitTrace 4;
     id p1?.p2? = dot(p1, p2);
     id p1?(lor1?) = momentum(p1, lor1);
     id momentum(p1?, p2?) = dot(p1, p2);
-    argument momentum, dot;
+    argument momentum, dot, epsilon4;
         #do i=1,`EXTRASYMBOLS_'
             id tmpv`i' = extrasymbol_(`i');
         #enddo
