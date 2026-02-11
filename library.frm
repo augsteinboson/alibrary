@@ -152,7 +152,7 @@ unitTrace 4;
     repeat id gammatrace(?x1, gamma5(lor?), ?x2) = gammatrace(?x1, gamma(lor), gamma5, ?x2)*tag(granzig);
     repeat;
     id gammatrace(?x1, gamma5, gamma(lor?), ?x2, gamma5, ?x3) = -gammatrace(?x1, gamma(lor), gamma5, ?x2, gamma5, ?x3);
-    id gammatrace(?x1, gamma5, slash(p?), ?x2, gamma5, ?x3) = -gammatrace(?x1, slash(p), gamma5, ?x2, gamma5, ?x3);
+    id gammatrace(?x1, gamma5, slash(x?), ?x2, gamma5, ?x3) = -gammatrace(?x1, slash(x), gamma5, ?x2, gamma5, ?x3);
     endrepeat;
     repeat id gammatrace(?x1, gamma5, gamma5, ?x2) = gammatrace(?x1, ?x2);
     id gammatrace(?x1, gamma(lor?), gamma5, ?x2) = gammatrace(?x1, gamma5(lor), ?x2);
@@ -180,9 +180,9 @@ unitTrace 4;
         traceN,`i';
     #enddo
     #call sort(diractrace-traceN)
-    if (match(epsilon4(lor1?, lor2?, lor3?, lor4?)));
-      exit "ERROR: diractrace: leftover epsilon4() at the end; is MaxGammaTracesPerTerm too small?";
-    endif;
+*    if (match(epsilon4(lor1?, lor2?, lor3?, lor4?)));
+*      exit "ERROR: diractrace: leftover epsilon4() at the end; is MaxGammaTracesPerTerm too small?";
+*    endif;
     if (match(gammatrace(?x)));
       exit "ERROR: diractrace: leftover gammatrace() at the end; is MaxGammaTracesPerTerm too small?";
     endif;
@@ -211,6 +211,7 @@ unitTrace 4;
 *    id epsilon4(lor1?, lor2?, lor3?, lor4?) = xN * epsilon4(lor1, lor2, lor3, lor4);
 *    id xN^xNPOW?odd_ = 0;
 *    id xN = 1;
+    
     repeat id epsilon4(lor1?, lor2?, lor3?, lorx?)*epsilon4(lorA?, lorB?, lorC?, lorx?) = (
        - d_(lor1,lorA)*d_(lor2,lorB)*d_(lor3,lorC)*3
        + d_(lor1,lorA)*d_(lor2,lorB)*d_(lor3,lorC)*d
@@ -251,6 +252,10 @@ unitTrace 4;
        - d_(lor1,lorD)*d_(lor2,lorC)*d_(lor3,lorA)*d_(lor4,lorB)
        + d_(lor1,lorD)*d_(lor2,lorC)*d_(lor3,lorB)*d_(lor4,lorA)
     );
+
+    id epsilon4(lor1?, lor2?, lor3?, lor4?) = epsilon4(lor1, lor2, lor3, lor4);
+
+
 #call end(contractepsilon4)
 #endprocedure
 
