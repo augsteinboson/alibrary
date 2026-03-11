@@ -62,6 +62,12 @@ unitTrace 4;
 * - d[ab] d[b0] d[0a] charge[b]^n -- a fixed index with a charge (=Q0, Q0^2)
     repeat id deltaf(flv1?, flv?)*deltaf(flv?, flv2?) = deltaf(flv1, flv2)*replace_(flv, flv1);
     repeat id deltaft(flv1?, flv?)*deltaft(flv?, flv2?) = deltaft(flv1, flv2)*replace_(flv, flv1);
+    repeat id deltaf(flv1?, flv?)*CKM(x1?, x2?, flv?, flv2?) = CKM(x1, x2, flv1, flv2)*replace_(flv, flv1);
+    repeat id deltaf(flv1?, flv?)*CKM(x1?, x2?, flv2?, flv?) = CKM(x1, x2, flv2, flv1)*replace_(flv, flv1);
+    repeat id deltaf(flv1?, flv?)*ConjCKM(x1?, x2?, flv?, flv2?) = ConjCKM(x1, x2, flv1, flv2)*replace_(flv, flv1);
+    repeat id deltaf(flv1?, flv?)*ConjCKM(x1?, x2?, flv2?, flv?) = ConjCKM(x1, x2, flv2, flv1)*replace_(flv, flv1);
+
+
 * Now we only have:
 * - d[aa]
 * - d[aa] charge[a]^n
